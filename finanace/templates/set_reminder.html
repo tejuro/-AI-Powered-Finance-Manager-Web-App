@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+      <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Set Bill Reminder</title>
+</head>
+<body>
+    <h2>Set Bill Reminder</h2>
+    <form method="POST" action="/set_reminder">
+        <input type="text" name="bill_name" placeholder="Bill Name" required><br>
+        <input type="date" name="due_date" required><br>
+        <input type="email" name="email" placeholder="Email" required><br>
+        <button type="submit">Set Reminder</button>
+    </form>
+</body>
+</html>

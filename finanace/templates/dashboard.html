@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Finance Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a1c4fd);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            overflow-y: auto;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .dashboard-container {
+            background: #fff;
+            padding: 35px 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            width: 460px;
+            text-align: center;
+            position: relative;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(30px); }
+            to { opacity: 1; transform: translate(0); }
+        }
+
+        .dashboard-container h1 {
+            margin-bottom: 25px;
+            color: #00796b;
+            font-size: 26px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 6px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #00796b;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #004d40;
+            transform: translate(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .logout-link {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: red;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .logout-link:hover {
+            text-decoration: underline;
+        }
+
+        .flash-message {
+            color: green;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #00796b;
+        }
+
+        .icon-label {
+            margin-right: 8px;
+            color: #00796b;
+        }
+
+        #budgetResult, #expenseResult, #billResult, #aiResult, #smartTipText {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #00695c;
+        }
+    </style>
+
+    <script>
+        function handleFormSubmit(event, formId, resultId) {
+            event.preventDefault();
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: form.method,
+                body: formData
+            })
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById(resultId).innerText = data;
+                form.reset();
+            })
+            .catch(() => {
+                document.getElementById(resultId).innerText = "❌ Error occurred!";
+            });
+        }
+
+        function callAI(endpoint, resultId) {
+            fetch(endpoint)
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById(resultId).innerText = data;
+            })
+            .catch(() => {
+                document.getElementById(resultId).innerText = "❌ Failed to fetch AI result.";
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <p class="flash-message">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h1><i class="fas fa-coins icon-label"></i>Smart Finance Dashboard</h1>
+
+        <!-- 💼 Set Budget -->
+        <div class="section">
+            <div class="section-title"><i class="fas fa-wallet icon-label"></i>Set Budget</div>
+            <form id="budgetForm" action="/set_budget" method="POST" onsubmit="handleFormSubmit(event, 'budgetForm', 'budgetResult')">
+                <input type="number" name="budget" placeholder="Enter Monthly Budget" required />
+                <input type="date" name="date" required>
+                <button type="submit">Set Budget</button>
+            </form>
+            <div id="budgetResult"></div>
+        </div>
+
+        <!-- 💸 Add Expenses -->
+        <div class="section">
+            <div class="section-title"><i class="fas fa-receipt icon-label"></i>Add Expenses</div>
+            <p style="font-size: 13px; color: #444;">Add 3 months of expenses to use Smart Tips and Expense Prediction</p>
+            <form id="expenseForm" action="/add_expense" method="POST" onsubmit="handleFormSubmit(event, 'expenseForm', 'expenseResult')">
+                <input type="text" name="name" placeholder="Expense Name" required />
+                <input type="number" name="amount" placeholder="Amount" required />
+                <input type="date" name="date" required>
+                <button type="submit">Add Expense</button>
+            </form>
+            <div id="expenseResult"></div>
+        </div>
+
+        <!-- ⏰ Bill Reminder -->
+        <div class="section">
+            <div class="section-title"><i class="fas fa-bell icon-label"></i>Bill Reminder</div>
+            <form id="billForm" action="/set_reminder" method="POST" onsubmit="handleFormSubmit(event, 'billForm', 'billResult')">
+                <input type="text" name="bill_name" placeholder="Bill Name" required />
+                <input type="date" name="due_date" required />
+                <input type="email" name="email" placeholder="Your Email" required />
+                <button type="submit">Set Reminder</button>
+            </form>
+            <div id="billResult"></div>
+        </div>
+
+        <!-- 🤖 AI Features -->
+        <div class="section">
+            <div class="section-title"><i class="fas fa-brain icon-label"></i>AI Features</div>
+            <button onclick="callAI('/ai/fraud_detection', 'aiResult')"><i class="fas fa-shield-alt icon-label"></i>Fraud Detection</button>
+            <button onclick="callAI('/ai/expense_prediction', 'aiResult')"><i class="fas fa-chart-line icon-label"></i>Expense Prediction</button>
+            <div id="aiResult"></div>
+        </div>
+
+        <!-- 💡 Extra AI Smart Tip -->
+        <div class="section">
+            <div class="section-title"><i class="fas fa-magic icon-label"></i>Get AI Smart Tip</div>
+            <button id="getSmartTip"><i class="fas fa-wand-magic-sparkles icon-label"></i>AI SmartTips</button>
+            <p id="smartTipText"></p>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById("getSmartTip").addEventListener("click", function () {
+        fetch('/ai/smart_tips', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("smartTipText").innerText = data.tip;
+        })
+        .catch(err => {
+            document.getElementById("smartTipText").innerText = "Failed to get tip.";
+        });
+    });
+    </script>
+</body>
+</html>
